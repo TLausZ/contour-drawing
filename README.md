@@ -18,9 +18,10 @@ Example image: [Andy Warhol, 1975](https://commons.wikimedia.org/wiki/File:Andy_
 
 ![Demo of the web app](demo-10fps.webp)
 
-The app runs entirely in the browser, with no server and no dependencies.
-Open the GitHub Page, or simply open `index.html` locally — the Warhol
-portrait is embedded in the file and preloaded as a demo image on startup.
+The app runs entirely in the browser, with no server and no dependencies:
+**[tlausz.github.io/contour-drawing](https://tlausz.github.io/contour-drawing/)** —
+or simply open `index.html` locally. The Warhol portrait is embedded in the
+file and preloaded as a demo image on startup.
 
 - Load your own image via drag & drop or "load image"; "example" reloads the
   Warhol portrait
