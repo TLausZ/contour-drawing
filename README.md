@@ -44,7 +44,9 @@ file and preloaded as a demo image on startup.
   invert switch. The lines are trimmed geometrically, so the downloaded SVG
   contains only the cut paths
 - "download svg" saves the result as plain black lines, "python script" the
-  CLI original
+  CLI original. A paper dropdown (A0 to A5, ANSI C to E, Tabloid, Legal,
+  Letter, Half Letter) writes the SVG in millimetres with a 10 mm margin,
+  orientation follows the image; "none" keeps the raw pixel size
 
 ## CLI (Python)
 

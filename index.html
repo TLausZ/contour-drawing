@@ -312,6 +312,25 @@
     <button id="btnClearPts">clear all points</button>
 
     <hr>
+    <div class="ctrl">
+      <label>paper</label>
+      <select id="paperSel">
+        <option value="" selected>none (pixels)</option>
+        <option value="841,1189" data-slug="A0">A0</option>
+        <option value="594,841" data-slug="A1">A1</option>
+        <option value="420,594" data-slug="A2">A2</option>
+        <option value="297,420" data-slug="A3">A3</option>
+        <option value="210,297" data-slug="A4">A4</option>
+        <option value="148,210" data-slug="A5">A5</option>
+        <option value="863.6,1117.6" data-slug="ANSI-E">ANSI E (34 x 44 in)</option>
+        <option value="558.8,863.6" data-slug="ANSI-D">ANSI D (22 x 34 in)</option>
+        <option value="431.8,558.8" data-slug="ANSI-C">ANSI C (17 x 22 in)</option>
+        <option value="279.4,431.8" data-slug="Tabloid">Tabloid (11 x 17 in)</option>
+        <option value="215.9,355.6" data-slug="Legal">Legal (8.5 x 14 in)</option>
+        <option value="215.9,279.4" data-slug="Letter">Letter (8.5 x 11 in)</option>
+        <option value="139.7,215.9" data-slug="Half-Letter">Half Letter (5.5 x 8.5 in)</option>
+      </select>
+    </div>
     <button id="btnDlSvg">download svg</button>
     <button id="btnDlPy">python script</button>
     <div id="status"></div>
@@ -977,9 +996,25 @@ function buildSvg(lines, w, h) {
   }).join('\n');
   const sw = (params.thickness * Math.max(w, h) / 500).toFixed(3);
   const g = (stroke, extra) => `<g fill="none" stroke="${stroke}"${extra} stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round">\n${paths}\n</g>`;
-  dlSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+  const paper = $('paperSel').value;
+  if (paper) {
+    // seite in mm, bild mit 10 mm rand eingepasst, ausrichtung folgt dem bild
+    let [pw, ph] = paper.split(',').map(Number);
+    if ((w > h) !== (pw > ph)) [pw, ph] = [ph, pw];
+    const margin = 10;
+    const sc = Math.min((pw - 2 * margin) / w, (ph - 2 * margin) / h);
+    const ox = (pw - w * sc) / 2, oy = (ph - h * sc) / 2;
+    const swMm = (params.thickness * 0.3 / sc).toFixed(4);   // 0.3 mm pro einheit linienstaerke
+    dlSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pw} ${ph}" width="${pw}mm" height="${ph}mm">
+<g transform="translate(${ox.toFixed(3)} ${oy.toFixed(3)}) scale(${sc.toFixed(6)})" fill="none" stroke="#000" stroke-width="${swMm}" stroke-linejoin="round" stroke-linecap="round">
+${paths}
+</g>
+</svg>`;
+  } else {
+    dlSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
 ${g('#000', '')}
 </svg>`;
+  }
   svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
 <rect width="${w}" height="${h}" fill="#ece2cd"/>
 ${g('#4a3a28', ' stroke-opacity="0.68"')}
@@ -1219,11 +1254,14 @@ function livePreview() {
   });
 }
 
+$('paperSel').addEventListener('change', renderResult);
 $('btnDlSvg').addEventListener('click', () => {
   if (!dlSvg) return;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([dlSvg], { type: 'image/svg+xml' }));
-  a.download = imgName + '-contour.svg';
+  const opt = $('paperSel').selectedOptions[0];
+  const suffix = opt.value ? '-' + opt.dataset.slug + (lastDims.w > lastDims.h ? '-landscape' : '-portrait') : '';
+  a.download = imgName + '-contour' + suffix + '.svg';
   a.click();
   URL.revokeObjectURL(a.href);
 });
