@@ -305,6 +305,7 @@
     </div>
 
     <div id="controls"></div>
+    <button id="btnReset">reset values</button>
 
     <hr>
     <div class="hint" id="ptsHint">click sets a point &middot; drag moves it &middot; click a point to delete it &middot; no points: image center</div>
@@ -887,6 +888,17 @@ $('overlay').addEventListener('pointerdown', e => {
   };
   m.addEventListener('pointermove', onMove);
   m.addEventListener('pointerup', onUp);
+});
+
+// setzt regler und blend auf die startwerte; modus, bild, punkte und maske bleiben
+$('btnReset').addEventListener('click', () => {
+  for (const s of SLIDERS) {
+    const input = $('sl-' + s.key);
+    input.value = s.def;
+    input.dispatchEvent(new Event('input'));
+  }
+  $('blendSel').value = '2,1.5';
+  $('blendSel').dispatchEvent(new Event('change'));
 });
 
 $('btnClearPts').addEventListener('click', () => {
