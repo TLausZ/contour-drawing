@@ -70,6 +70,12 @@ Examples:
                              '  • Try: 0.6–0.8 to avoid over-plotting in bright zones')
     parser.add_argument('--blur', type=float, default=0.0,
                         help='Gaussian blur sigma (default: 0.0)')
+    parser.add_argument('--merge', type=float, default=2.0,
+                        help='soft-min blend width between the fronts of several source points, '
+                             'in contour spacings; 0 keeps the sharp crease (default: 2)')
+    parser.add_argument('--smooth', type=float, default=1.5,
+                        help='Gaussian blur sigma applied to the distance map, removes zigzag '
+                             'in dense dark regions (default: 1.5)')
     parser.add_argument('--scale', type=float, default=1.0,
                         help='Scale factor for input image (default: 1.0)')
     parser.add_argument('--thickness', type=float, default=1.0,
@@ -226,6 +232,23 @@ def fast_marching_dijkstra(speed, sources):
     elif not show_progress:
         print("\rProgress: 100.0%")
     
+    return T
+
+
+def distance_map(speed, sources, args):
+    """
+    One fast-marching run per source point, blended with a soft minimum so the
+    fronts meet without a crease, then Gaussian-smoothed against zigzag in
+    dark regions where contour levels lie only a few pixels apart.
+    """
+    maps = [fast_marching_dijkstra(speed, [s]) for s in sources]
+    T = np.min(maps, axis=0)
+    if len(maps) > 1 and args.merge > 0:
+        s = args.merge * T[np.isfinite(T)].max() / args.num
+        acc = sum(np.exp(-(M - T) / s) for M in maps)
+        T = T - s * np.log(acc)
+    if args.smooth > 0:
+        T = gaussian(T, sigma=args.smooth, preserve_range=True)
     return T
 
 
@@ -398,13 +421,13 @@ def main():
             print(f"Using default difference sources: {sources}")
         set_a, set_b = sources[0::2], sources[1::2]
         print(f"Running fast marching for set A ({len(set_a)} points)...")
-        T_a = fast_marching_dijkstra(speed, set_a)
+        T_a = distance_map(speed, set_a, args)
         print(f"Running fast marching for set B ({len(set_b)} points)...")
-        T_b = fast_marching_dijkstra(speed, set_b)
+        T_b = distance_map(speed, set_b, args)
         T = T_a - T_b
     else:
         print("Running fast marching algorithm...")
-        T = fast_marching_dijkstra(speed, sources)
+        T = distance_map(speed, sources, args)
     
     # Render output directly from distance map
     render_contours(T, args)

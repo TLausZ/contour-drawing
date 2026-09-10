@@ -294,6 +294,16 @@
       </select>
     </div>
 
+    <div class="ctrl">
+      <label>blend</label>
+      <select id="blendSel">
+        <option value="0,0">off</option>
+        <option value="1,1">soft</option>
+        <option value="2,1.5" selected>medium</option>
+        <option value="4,3">strong</option>
+      </select>
+    </div>
+
     <div id="controls"></div>
 
     <hr>
@@ -504,6 +514,38 @@ function fastMarching(speed, w, h, sources) {
   return T;
 }
 
+// glatte distanzkarte: eine karte pro quellpunkt, soft-min statt hartem minimum,
+// damit sich die fronten ohne knick treffen; danach gauss auf der karte gegen zickzack
+// in dunklen zonen (dort liegen die level nur wenige pixel auseinander)
+function distanceMap(speed, w, h, sources, params) {
+  const maps = sources.map(s => fastMarching(speed, w, h, [s]));
+  let D = maps[0];
+  if (maps.length > 1 && params.merge > 0) {
+    D = new Float64Array(w * h);
+    let hi = 0;
+    for (let i = 0; i < D.length; i++) {
+      let m = Infinity;
+      for (const T of maps) if (T[i] < m) m = T[i];
+      D[i] = m;
+      if (m > hi && m < Infinity) hi = m;
+    }
+    const s = params.merge * hi / params.num;   // uebergangsbreite in konturabstaenden
+    for (let i = 0; i < D.length; i++) {
+      let acc = 0;
+      for (const T of maps) acc += Math.exp(-(T[i] - D[i]) / s);
+      D[i] -= s * Math.log(acc);
+    }
+  } else if (maps.length > 1) {
+    D = new Float64Array(w * h);
+    for (let i = 0; i < D.length; i++) {
+      let m = Infinity;
+      for (const T of maps) if (T[i] < m) m = T[i];
+      D[i] = m;
+    }
+  }
+  return params.smooth > 0 ? gaussianBlur(D, w, h, params.smooth) : D;
+}
+
 // marching squares: segmente pro zelle, dann verkettung ueber kanten-ids
 function contourLevel(T, w, h, L) {
   const pts = new Map();
@@ -591,15 +633,15 @@ onmessage = (e) => {
       // interferenz: differenz der distanzkarten zweier quellpunkt-sets
       const A = sources.filter((_, i) => i % 2 === 0);
       const B = sources.filter((_, i) => i % 2 === 1);
-      const TA = fastMarching(speed, w, h, A);
-      const TB = fastMarching(speed, w, h, B);
+      const TA = distanceMap(speed, w, h, A, params);
+      const TB = distanceMap(speed, w, h, B, params);
       D = new Float64Array(w * h);
       for (let i = 0; i < D.length; i++) D[i] = TA[i] - TB[i];
       const sorted = Float64Array.from(D).sort();
       lo = sorted[Math.floor(sorted.length * 0.005)];
       hi = sorted[Math.floor(sorted.length * 0.995)];
     } else {
-      D = fastMarching(speed, w, h, sources);
+      D = distanceMap(speed, w, h, sources, params);
       const finite = Float64Array.from(D).sort();
       lo = finite[0];
       hi = finite[Math.min(finite.length - 1, Math.floor(finite.length * 0.9999))];
@@ -675,6 +717,11 @@ const NUM_MODES = {
   fmm:    { label: 'contours', help: 'number of contour levels between the source point and the farthest region' },
   diff:   { label: 'contours', help: 'number of difference levels between the two point sets' },
 };
+// blend: merge (soft-min breite in konturabstaenden) und smooth (gauss-sigma auf der distanzkarte)
+const setBlend = () => { [params.merge, params.smooth] = $('blendSel').value.split(',').map(Number); };
+setBlend();
+$('blendSel').addEventListener('change', () => { setBlend(); scheduleCompute(); });
+
 $('modeSel').addEventListener('change', () => {
   params.mode = $('modeSel').value;
   const cfg = SLIDERS.find(x => x.key === 'num');
@@ -897,6 +944,7 @@ function compute() {
     params: {
       mode: params.mode, num: params.num, min: params.minPts, gamma: params.gamma,
       darkBoost: params.darkBoost, brightCut: params.brightCut, blur: params.blur,
+      merge: params.merge, smooth: params.smooth,
     },
     sources,
   });

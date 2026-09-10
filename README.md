@@ -32,6 +32,10 @@ file and preloaded as a demo image on startup.
   delete it. Without points the computation starts at the image center
 - Sliders for contour count, gamma, dark boost, bright cut, blur, line width
   and compute size; every change recomputes automatically
+- A blend dropdown (off, soft, medium, strong) controls how softly the fronts
+  of several source points merge and how much the distance map is smoothed
+  against zigzag in dark regions; corresponds to `--merge` and `--smooth` in
+  the CLI
 - A draggable divider over the preview compares both sides: left the
   preprocessed source (blur, gamma, dark boost and bright cut are visible
   there), right the contour result
@@ -69,6 +73,8 @@ python3 contour-drawing.py example/warhol.jpg -o example/warhol.svg \
 | `--dark-boost` | 1.0 | above 1: more lines in dark regions |
 | `--bright-cut` | 1.0 | below 1: fewer lines in bright regions |
 | `--blur` | 0.0 | Gaussian blur sigma |
+| `--merge` | 2.0 | soft-min blend width between the fronts of several source points, in contour spacings; 0 keeps the sharp crease |
+| `--smooth` | 1.5 | Gaussian blur sigma on the distance map, removes zigzag in dense dark regions |
 | `--scale` | 1.0 | input image scale factor |
 | `--thickness` | 1.0 | line width |
 | `--color` / `--bg` | black / white | line and background color |
