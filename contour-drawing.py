@@ -59,12 +59,12 @@ Examples:
     parser.add_argument('--gamma', type=float, default=1.0,
                         help='Gamma correction factor (default: 1.0)')
     parser.add_argument('--dark-boost', type=float, default=1.0,
-                        help='Multiply intensity in dark regions (<40%% brightness)\n'
+                        help='Darken shadows (<40%% brightness)\n'
                              '  • >1.0 → MORE LINES in shadows (great for faces, hair)\n'
                              '  • <1.0 → suppresses dark noise\n'
                              '  • Try: 1.5–2.5 for portraits, 1.0 for flat art')
     parser.add_argument('--bright-cut', type=float, default=1.0,
-                        help='Cap intensity in bright regions (>70%% brightness)\n'
+                        help='Brighten highlights (>70%% brightness)\n'
                              '  • <1.0 → REDUCES LINES in highlights (clean sky, white areas)\n'
                              '  • =1.0 → no change\n'
                              '  • Try: 0.6–0.8 to avoid over-plotting in bright zones')
@@ -119,12 +119,13 @@ def load_and_preprocess(image_path, args):
         # Re-normalize after gamma (critical for preserving curve)
         intensity = (intensity - intensity.min()) / (intensity.max() - intensity.min() + 1e-8)
     
-    # Apply dark boost and bright cut
+    # Dark boost divides (darker = slower = more lines), bright cut pulls towards
+    # white (brighter = faster = fewer lines); linear 0.1 ramp at the thresholds
     if args.dark_boost != 1.0 or args.bright_cut != 1.0:
-        mask_dark = intensity < 0.4
-        mask_bright = intensity > 0.7
-        intensity[mask_dark] *= args.dark_boost
-        intensity[mask_bright] = np.clip(intensity[mask_bright], 0.0, args.bright_cut)
+        v = intensity
+        wd = np.clip((0.4 - v) / 0.1, 0.0, 1.0)
+        wb = np.clip((v - 0.7) / 0.1, 0.0, 1.0)
+        intensity = v + wd * (v / args.dark_boost - v) + wb * (1.0 - (1.0 - v) * args.bright_cut - v)
     
     return intensity
 

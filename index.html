@@ -390,9 +390,13 @@ function preprocess(gray, w, h, p) {
     for (let i = 0; i < inten.length; i++) inten[i] = (inten[i] - mn) / range;
   }
   if (p.darkBoost !== 1 || p.brightCut !== 1) {
+    // dark boost teilt (dunkler = langsamer = mehr linien), bright cut zieht richtung weiss
+    // (heller = schneller = weniger linien); lineare rampe von 0.1 an den schwellen statt stufe
     for (let i = 0; i < inten.length; i++) {
-      if (inten[i] < 0.4) inten[i] *= p.darkBoost;
-      else if (inten[i] > 0.7) inten[i] = Math.min(inten[i], p.brightCut);
+      const v = inten[i];
+      const wd = Math.min(1, Math.max(0, (0.4 - v) / 0.1));
+      const wb = Math.min(1, Math.max(0, (v - 0.7) / 0.1));
+      inten[i] = v + wd * (v / p.darkBoost - v) + wb * (1 - (1 - v) * p.brightCut - v);
     }
   }
   return inten;
@@ -668,8 +672,8 @@ const SLIDERS = [
   { key: 'num',       label: 'contours', help: 'number of contour levels between the source point and the farthest region',       min: 5,    max: 200, step: 5,    def: 60 },
   { key: 'minPts',    label: 'min. points', help: 'contours with fewer points than this are dropped, filters small noisy loops',    min: 2,    max: 60,  step: 1,    def: 12 },
   { key: 'gamma',     label: 'gamma', help: 'gamma correction before computing: above 1 darkens midtones, below 1 brightens them',          min: 0.2,  max: 3,   step: 0.05, def: 1 },
-  { key: 'darkBoost', label: 'dark boost', help: 'multiplies intensity in dark regions (under 40% brightness): above 1 packs more lines into shadows, good for faces and hair',     min: 0.5,  max: 3,   step: 0.1,  def: 1 },
-  { key: 'brightCut', label: 'bright cut', help: 'caps intensity in bright regions (over 70% brightness): below 1 thins out lines in highlights like sky or white areas',     min: 0.3,  max: 1,   step: 0.05, def: 1 },
+  { key: 'darkBoost', label: 'dark boost', help: 'darkens shadows (under 40% brightness): above 1 packs more lines into them, good for faces and hair; below 1 thins them out',     min: 0.5,  max: 3,   step: 0.1,  def: 1 },
+  { key: 'brightCut', label: 'bright cut', help: 'brightens highlights (over 70% brightness): below 1 thins out lines in sky or white areas',     min: 0.3,  max: 1,   step: 0.05, def: 1 },
   { key: 'blur',      label: 'blur', help: 'gaussian blur applied before computing, smooths noisy detail into calmer lines', min: 0,    max: 5,   step: 0.25, def: 0 },
   { key: 'thickness', label: 'line width', help: 'stroke width of the contour lines in the svg', min: 0.25, max: 3, step: 0.25, def: 1 },
   { key: 'size',      label: 'compute size', help: 'internal resolution (longest edge in px): larger means more detail but slower recomputes', min: 200, max: 800, step: 50, def: 480 },
