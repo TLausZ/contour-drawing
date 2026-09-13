@@ -332,6 +332,7 @@
       </select>
     </div>
     <button id="btnDlSvg">download svg</button>
+    <button id="btnDlPng">download png</button>
     <button id="btnDlPy">python script</button>
     <div id="status"></div>
   </div>
@@ -1264,6 +1265,27 @@ $('btnDlSvg').addEventListener('click', () => {
   a.download = imgName + '-contour' + suffix + '.svg';
   a.click();
   URL.revokeObjectURL(a.href);
+});
+$('btnDlPng').addEventListener('click', () => {
+  if (!dlSvg) return;
+  // ponytail: svg im browser rastern, 2x aufloesung, weisser hintergrund
+  const img = new Image();
+  const url = URL.createObjectURL(new Blob([dlSvg], { type: 'image/svg+xml' }));
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const cv = document.createElement('canvas');
+    cv.width = img.naturalWidth * 2; cv.height = img.naturalHeight * 2;
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    const opt = $('paperSel').selectedOptions[0];
+    const suffix = opt.value ? '-' + opt.dataset.slug + (lastDims.w > lastDims.h ? '-landscape' : '-portrait') : '';
+    a.download = imgName + '-contour' + suffix + '.png';
+    a.click();
+  };
+  img.src = url;
 });
 $('btnDlPy').addEventListener('click', () => {
   const a = document.createElement('a');
