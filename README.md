@@ -85,3 +85,7 @@ The web app ports the same algorithm to JavaScript (fast marching with a
 binary heap, contours via marching squares) and computes on a downscaled
 version of the image to stay interactive. For full-resolution plotter output
 the Python script is the better choice.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
