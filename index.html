@@ -222,7 +222,7 @@
     height: 16px;
   }
   .hint { font-size: 12px; color: var(--ink-faint); }
-  select {
+  select, input[type=number] {
     font-family: inherit;
     font-size: 12px;
     color: var(--ink);
@@ -332,7 +332,16 @@
       </select>
     </div>
     <button id="btnDlSvg">download svg</button>
-    <button id="btnDlPng">download png</button>
+    <hr>
+    <div class="ctrl">
+      <label>raster export <span class="hint">long edge in px</span></label>
+      <div class="btnrow">
+        <input type="number" id="pngSize" value="2048" min="200" max="6000" step="100">
+        <select id="pngFmt"><option value="image/png">png</option><option value="image/webp">webp</option></select>
+      </div>
+    </div>
+    <div class="btnrow" id="pngSizes"><button>1280</button><button>2048</button><button>6000</button></div>
+    <button id="btnDlPng">download raster</button>
     <button id="btnDlPy">python script</button>
     <div id="status"></div>
   </div>
@@ -1266,23 +1275,29 @@ $('btnDlSvg').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(a.href);
 });
+$('pngSizes').onclick = e => { if (e.target.tagName === 'BUTTON') $('pngSize').value = e.target.textContent; };
 $('btnDlPng').addEventListener('click', () => {
   if (!dlSvg) return;
-  // ponytail: svg im browser rastern, 2x aufloesung, weisser hintergrund
+  // svg im browser rastern, lange kante aus dem eingabefeld, weisser hintergrund
+  const size = Math.min(6000, Math.max(200, +$('pngSize').value || 2048));
   const img = new Image();
   const url = URL.createObjectURL(new Blob([dlSvg], { type: 'image/svg+xml' }));
   img.onload = () => {
     URL.revokeObjectURL(url);
     const cv = document.createElement('canvas');
-    cv.width = img.naturalWidth * 2; cv.height = img.naturalHeight * 2;
+    const k = size / Math.max(img.naturalWidth, img.naturalHeight);
+    cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
     const ctx = cv.getContext('2d');
     ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     const a = document.createElement('a');
-    a.href = cv.toDataURL('image/png');
+    // quality 1 = lossless webp in chromium; browser ohne webp-encoder liefern png zurueck
+    const fmt = $('pngFmt').value;
+    a.href = cv.toDataURL(fmt, 1);
+    const ext = a.href.startsWith('data:image/webp') ? 'webp' : 'png';
     const opt = $('paperSel').selectedOptions[0];
     const suffix = opt.value ? '-' + opt.dataset.slug + (lastDims.w > lastDims.h ? '-landscape' : '-portrait') : '';
-    a.download = imgName + '-contour' + suffix + '.png';
+    a.download = imgName + '-contour' + suffix + '.' + ext;
     a.click();
   };
   img.src = url;
