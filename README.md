@@ -3,7 +3,8 @@
 Generates geodesic contour lines from an image: a fast marching method solves
 the Eikonal equation from one or more source points, travelling fast through
 bright image regions and slowly through dark ones. The isolines of the
-resulting distance map form a contour drawing well suited for pen plotters.
+resulting distance map form a contour drawing, exported as SVG for pen
+plotters or as PNG/WebP for print and screen.
 
 ![Example: Andy Warhol as a contour drawing](example/warhol.svg)
 
