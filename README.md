@@ -4,7 +4,9 @@ Generates geodesic contour lines from an image: a fast marching method solves
 the Eikonal equation from one or more source points, travelling fast through
 bright image regions and slowly through dark ones. The isolines of the
 resulting distance map form a contour drawing, exported as SVG for pen
-plotters or as PNG/WebP for print and screen.
+plotters or as PNG/WebP for print and screen. A third mode draws the image as
+one single closed line that grows from a start point and fills the image by
+differential growth.
 
 ![Example: Andy Warhol as a contour drawing](example/warhol.svg)
 
@@ -26,9 +28,10 @@ file and preloaded as a demo image on startup.
 
 - Load your own image via drag & drop or "load image"; "example" reloads the
   Warhol portrait
-- Two drawing modes: fast marching (geodesic contours, as in the CLI) and
+- Three drawing modes: fast marching (geodesic contours, as in the CLI),
   difference (interference pattern between two source-point sets, points
-  alternate between the sets)
+  alternate between the sets) and single line (one closed line that never
+  crosses itself, see below)
 - Click on the image to set a source point, drag to move it, click a point to
   delete it. Without points the computation starts at the image center
 - Sliders for contour count, gamma, dark boost, bright cut, blur, line width
@@ -36,7 +39,15 @@ file and preloaded as a demo image on startup.
 - A blend dropdown (off, soft, medium, strong) controls how softly the fronts
   of several source points merge and how much the distance map is smoothed
   against zigzag in dark regions; corresponds to `--merge` and `--smooth` in
-  the CLI
+  the CLI (not used in single line mode)
+- Single line mode grows a small loop from the start point (the one source
+  point, or the image center). The line repels itself and keeps a spacing
+  that follows the brightness: "dark spacing" and "bright spacing" set the
+  distance between neighbouring strands in the darkest and brightest areas,
+  in percent of the long image edge. Smaller values mean more line and a
+  longer growth. The preview shows the growth live; the status line reports
+  the step and point count, and a download during growth saves the current
+  state with the step in the file name
 - A draggable divider over the preview compares both sides: left the
   preprocessed source (blur, gamma, dark boost and bright cut are visible
   there), right the contour result
@@ -85,7 +96,8 @@ python3 contour-drawing.py example/warhol.jpg -o example/warhol.svg \
 The web app ports the same algorithm to JavaScript (fast marching with a
 binary heap, contours via marching squares) and computes on a downscaled
 version of the image to stay interactive. For full-resolution plotter output
-the Python script is the better choice.
+the Python script is the better choice. Single line mode exists only in the
+web app.
 
 ## License
 
