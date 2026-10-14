@@ -15,6 +15,14 @@ distance maps of two source-point sets.
 
 ![Example: difference mode](example/warhol-difference.svg)
 
+And as a single line: one closed loop grows from the image center, repels
+itself and keeps a strand spacing that follows the brightness, so dark
+regions pack more line. The loop never crosses itself, a plotter draws it in
+one stroke without lifting the pen. Generated in the web app with dark
+spacing 0.5, bright spacing 3, line width 0.8 and compute size 500.
+
+![Example: single line mode](example/warhol-line.svg)
+
 Example image: [Andy Warhol, 1975](https://commons.wikimedia.org/wiki/File:Andy_Warhol1975.jpg), public domain, Wikimedia Commons.
 
 ## Web app
