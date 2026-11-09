@@ -15,7 +15,7 @@ distance maps of two source-point sets.
 
 ![Example: difference mode](example/warhol-difference.svg)
 
-And as a single line: one closed loop grows from the image center, repels
+And as a single line, using differential growth: one closed loop grows from the image center, repels
 itself and keeps a strand spacing that follows the brightness, so dark
 regions pack more line. The loop never crosses itself, a plotter draws it in
 one stroke without lifting the pen. Generated in the web app with dark
@@ -38,7 +38,7 @@ file and preloaded as a demo image on startup.
   Warhol portrait
 - Three drawing modes: fast marching (geodesic contours, as in the CLI),
   difference (interference pattern between two source-point sets, points
-  alternate between the sets) and single line (one closed line that never
+  alternate between the sets) and single line (differential growth, one closed line that never
   crosses itself, see below)
 - Click on the image to set a source point, drag to move it, click a point to
   delete it. Without points the computation starts at the image center
